@@ -1,23 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "SUA-CHAVE",
-    authDomain: "SEU-PROJETO.firebaseapp.com",
-    databaseURL: "https://SEU-PROJETO.firebaseio.com",
-    projectId: "SEU-PROJETO",
-    storageBucket: "SEU-PROJETO.appspot.com",
-    messagingSenderId: "XXXX",
-    appId: "1:XXXX:web:XXXX"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-</script>
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Gerenciamento de Máquinas - Patrimônio</title>
@@ -28,7 +11,6 @@
       color: white;
       margin: 0;
       padding: 20px;
-      position: relative;
     }
     h1 {
       text-align: center;
@@ -79,7 +61,6 @@
       padding: 10px;
       border-bottom: 1px solid #333;
       text-align: center;
-      color: white;
     }
     th {
       background-color: #03dac5;
@@ -112,54 +93,9 @@
       width: 140px;
       font-size: 14px;
     }
-
-    /* Botão atualizar no canto superior esquerdo */
-    #btnAtualizar {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 1000;
-      background-color: #03dac5;
-      color: black;
-      padding: 8px 12px;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-      box-shadow: 0 0 8px #03dac5aa;
-      transition: background-color 0.3s ease;
-    }
-    #btnAtualizar:hover {
-      background-color: #029e96;
-      color: white;
-    }
-
-    /* Botão relatório diário fixado próximo ao atualizar */
-    #btnRelatorioDiario {
-      position: fixed;
-      top: 20px;
-      left: 120px;
-      z-index: 1000;
-      background-color: #03dac5;
-      color: black;
-      padding: 8px 12px;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-      box-shadow: 0 0 8px #03dac5aa;
-      transition: background-color 0.3s ease;
-    }
-    #btnRelatorioDiario:hover {
-      background-color: #029e96;
-      color: white;
-    }
   </style>
 </head>
 <body>
-
-  <button id="btnAtualizar" onclick="location.reload()">Atualizar</button>
-  <button id="btnRelatorioDiario" onclick="abrirRelatorioDiario()">Relatório Diário</button>
 
   <h1>Controle de Máquinas no Armário</h1>
 
@@ -196,7 +132,7 @@
   </table>
 
   <script>
-    let registros = JSON.parse(localStorage.getItem('registros')) || [];
+    let registros = [];
 
     function validarNome() {
       const nomeInput = document.getElementById('nome');
@@ -232,7 +168,6 @@
       }
 
       registros.push({ nomeCompleto, nome, ipn, tipo, registro, data, acao, observacao: '' });
-      localStorage.setItem('registros', JSON.stringify(registros));
       atualizarTabela();
       limparCampos();
     }
@@ -265,26 +200,24 @@
         const tr = document.createElement('tr');
         tr.className = classe;
         tr.innerHTML = `
-          <td>${reg.nomeCompleto}</td>
-          <td>${reg.nome}</td>
-          <td>${reg.ipn}</td>
-          <td>${reg.tipo}</td>
-          <td>${reg.registro}</td>
-          <td>${dataRegistro.toLocaleString()}</td>
-          <td>${acao}</td>
+          <td style="color: black;">${reg.nomeCompleto}</td>
+          <td style="color: black;">${reg.nome}</td>
+          <td style="color: black;">${reg.ipn}</td>
+          <td style="color: black;">${reg.tipo}</td>
+          <td style="color: black;">${reg.registro}</td>
+          <td style="color: black;">${dataRegistro.toLocaleString()}</td>
+          <td style="color: black;">${acao}</td>
           <td><input type="checkbox" ${reg.acao === 'Saída' ? 'checked disabled' : ''} onchange="marcarSaida(${i}, this)"></td>
           <td><button onclick="excluirRegistro(${i})">🗑️</button></td>
           <td><input type="text" class="observacao" value="${reg.observacao || ''}" placeholder="Observação" onchange="salvarObservacao(${i}, this.value)" /></td>
         `;
         tbody.appendChild(tr);
       });
-
-      localStorage.setItem('registros', JSON.stringify(registros));
     }
 
     function salvarObservacao(index, valor) {
       registros[index].observacao = valor;
-      localStorage.setItem('registros', JSON.stringify(registros));
+      atualizarTabela();
     }
 
     function marcarSaida(index, checkbox) {
@@ -294,14 +227,12 @@
       } else {
         registros[index].acao = 'Entrada';
       }
-      localStorage.setItem('registros', JSON.stringify(registros));
       atualizarTabela();
     }
 
     function excluirRegistro(index) {
       if (confirm('Deseja excluir este registro?')) {
         registros.splice(index, 1);
-        localStorage.setItem('registros', JSON.stringify(registros));
         atualizarTabela();
       }
     }
@@ -314,101 +245,7 @@
       });
     }
 
-    // Função para abrir a janela de relatório diário
-    function abrirRelatorioDiario() {
-      const saidas = registros.filter(r => r.acao === 'Saída');
-      if (saidas.length === 0) {
-        alert('Não há registros de saída para hoje.');
-        return;
-      }
-
-      const janela = window.open('', '_blank', 'width=900,height=600,scrollbars=yes');
-      janela.document.write(`
-        <html lang="pt-BR">
-        <head>
-          <meta charset="UTF-8" />
-          <title>Relatório Diário - Saídas</title>
-          <style>
-            body {
-              font-family: 'Segoe UI', sans-serif;
-              background-color: #121212;
-              color: white;
-              margin: 20px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              background-color: #1e1e1e;
-              border-radius: 5px;
-              overflow: hidden;
-            }
-            th, td {
-              padding: 10px;
-              border: 1px solid #333;
-              text-align: center;
-              color: white;
-            }
-            th {
-              background-color: #03dac5;
-              color: black;
-            }
-            button {
-              background-color: #03dac5;
-              color: black;
-              padding: 10px 15px;
-              border: none;
-              border-radius: 5px;
-              font-weight: bold;
-              cursor: pointer;
-              margin-bottom: 20px;
-            }
-            button:hover {
-              background-color: #029e96;
-              color: white;
-            }
-          </style>
-        </head>
-        <body>
-          <h2>Relatório Diário - Registros de Saída</h2>
-          <button onclick="window.print()">Exportar em PDF (Imprimir)</button>
-          <table>
-            <thead>
-              <tr>
-                <th>Nome Completo</th>
-                <th>Nome Patrimônio</th>
-                <th>IPN</th>
-                <th>Tipo</th>
-                <th>Registro</th>
-                <th>Data</th>
-                <th>Ação</th>
-                <th>Observação</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${saidas.map(r => `
-                <tr>
-                  <td>${r.nomeCompleto}</td>
-                  <td>${r.nome}</td>
-                  <td>${r.ipn}</td>
-                  <td>${r.tipo}</td>
-                  <td>${r.registro}</td>
-                  <td>${new Date(r.data).toLocaleString()}</td>
-                  <td>${r.acao}</td>
-                  <td>${r.observacao ? r.observacao.replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </body>
-        </html>
-      `);
-      janela.document.close();
-    }
-
-    setInterval(atualizarTabela, 60000);
-
     atualizarTabela();
   </script>
-
 </body>
 </html>
